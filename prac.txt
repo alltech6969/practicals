@@ -1,0 +1,442 @@
+IR prac 
+Pr1: Spelling correction
+def calculate(str1, str2):
+    len_str1 = len(str1) + 1
+    len_str2 = len(str2) + 1
+    edm = [[0] * len_str1 for _ in range(len_str2)]
+   
+    for i in range(len_str1):
+        edm[0][i] = i
+    for j in range(len_str2):
+        edm[j][0] = j
+
+    for i in range(1, len_str2):
+        for j in range(1, len_str1):
+            if str2[i - 1] == str1[j - 1]:
+                cost = 0
+            else:
+                cost = 1
+            insert = edm[i][j - 1] + 1
+            delete = edm[i - 1][j] + 1
+            substitute = edm[i - 1][j - 1] + cost
+            edm[i][j] = min(insert, delete, substitute)
+           
+    for i in range(len_str2):
+        for j in range(len_str1):
+            if i==0:
+                print(str1[j-1] if j>0 else " ",end=" ")
+            else:
+                print(str2[i-1] if j==0 else edm[i][j],end=" ")
+        print()
+    print("Edit distance:", edm[-1][-1])
+str1 = str(input("Enter the first string: "))
+str2 = str(input("Enter the second string: "))
+calculate(str1, str2)
+
+Pr2:Document indexing and retrieval
+doc1="I am student of ruparel college"
+doc2="I am studying computers from ruparel college"
+
+tokens1 = doc1.lower().split() 
+tokens2 = doc2.lower().split()
+terms=list(set(tokens1+tokens2))
+
+inverted_index = {} 
+for term in terms:
+    documents = []
+    if term in tokens1:
+        documents.append("Document 1")
+    if term in tokens2:
+        documents.append("Document 2")
+    inverted_index[term] = documents
+    
+for term, documents in inverted_index.items():
+    print(term, "->", ",".join(documents))
+    
+str=input('enter a query:')
+tokens1 = str.lower().split() 
+for term in tokens1:
+    if term in inverted_index:
+        print(term)
+        print(inverted_index.get(term))
+
+Pr3a: Precision, recall f-measures
+fetch=set(["doc1","doc2","doc3"])
+relevant=set(["doc1","doc4"])
+
+def calculate(fetch,relevant):
+    tp=len(fetch.intersection(relevant))
+    fp=len(fetch.difference(relevant))
+    fn=len(relevant.difference(fetch))
+
+    print("true poitive:",tp)
+    print("false poitive:",fp)
+    print("false negative:",fn)
+
+    precision=tp/(tp+fp)
+    recall=tp/(tp+fn)
+    f_score=2*precision*recall/(precision+recall)
+
+    print("precion:",precision)
+    print("recall",recall)
+    print("f_score",f_score)
+calculate(fetch,relevant)
+
+Pr3b: Average precision recall score
+from sklearn.metrics import average_precision_score
+y_true=[0,1,1,0,1,1]
+y_score=[0.25,0.3,0.12,0.9,0.25,0.63]
+
+avg=average_precision_score(y_true,y_score)
+print("average_precision_score:",avg)
+
+Pr4: Page Rank/Link analysis
+def pagerank():
+    print("Enter the matrix:")
+    array_input = []
+    
+    for x in range(3):
+        array_input.append([float(y) for y in input().split()])
+    print(array_input)
+    finalmat=[1,1,1]
+    itr=int(input("Enter the number of iteration"))
+    
+    for loop in range(itr):
+        print("Iteration:",loop+1)
+        cnt=0
+
+        for row in range(len(array_input)):
+            sum=0
+            for col in range(len(array_input[row])):
+                if(array_input[col][row]== 1):
+                    for i in range(3):
+                        if(array_input[col][i]==1):
+                            cnt=cnt+1
+                    sum+=finalmat[col]/cnt
+                cnt=0
+                finalmat[row]=0.5+(0.5*sum)
+                print(finalmat[row],'')
+pagerank()
+
+Pr5a: Boolean Retrieval Model
+plays={"Anthony and Cleopatra":"anthony is there, brutus is ceaser is with cleopatra mercy worser.",
+       "Julius Ceaser":"anthony is there, brutus is ceaser is but calpurnia is.",
+       "The Tempest":"mrecy worser","Hamlet":"ceaser and brutus are present with mercy and worser",
+       "Othello":"ceaser is present with mercy and worser","Macbeth":"anthony is there,ceaser,mercy."}
+words=["anthony","brutus","ceaser","calpurnia","cleopatra","mercy","worser"]
+vector_matrix=[[0 for i in range(len(plays))]for j in range(len(words))]
+tokens=[]
+string_list=[]
+
+text_list=list((plays.values()))
+
+for i in range(len(words)):
+    for j in range(len(text_list)):
+        if words[i] in text_list[j]:
+            vector_matrix[i][j]=1
+        else:
+            vector_matrix[i][j]=0
+
+
+for i in vector_matrix:
+    print(i)
+
+def query_op(query):
+    tokens=query.lower().split()
+    print(tokens)
+
+    for vector in vector_matrix:
+        mystring=""
+        for digit in vector:
+            mystring +=str(digit)
+        string_list.append(int(mystring,2))
+
+    print(string_list)
+    return(tokens)
+
+def or_op():
+    cnt=0
+    tokens=query_op("anthony brutus")
+    for i in range(len(tokens)):
+        for j in range(len(words)):
+            if tokens[i] in words[j]:
+                if cnt == 1:
+                    secondindex=j
+                    cnt=0
+                    print(bin(string_list[firstindex] | string_list[secondindex]))
+                else:
+                    cnt=1
+                    firstindex=j
+
+def and_op():
+    cnt=0
+    tokens=query_op("anthony brutus")
+    for i in range(len(tokens)):
+        for j in range(len(words)):
+            if tokens[i] in words[j]:
+                if cnt == 1:
+                    secondindex=j
+                    cnt=0
+                    print(bin(string_list[firstindex] & string_list[secondindex]))
+                else:
+                    cnt=1
+                    firstindex=j
+
+def not_and_op():
+    cnt=0
+    tokens=query_op("not anthony mercy")
+    invertfirst=0
+    invertsecond=0
+    if tokens[0]=="not":
+        invertfirst=1
+    if tokens[2]=="not":
+        invertsecond=1
+        print(invertfirst,inversecond)
+    for i in range(len(tokens)):
+        for j in range(len(words)):
+            if tokens[i] in words[j]:
+                if cnt==1:
+                    secondindex=j
+                    cnt=0
+                    if(invertfirst==1) and (invertsecond==1):
+                        print(bin(~(string_list[firstindex])& ~(string_list[secondindex])))
+                    if(invertfirst==1) and (invertsecond==0):
+                        print(bin(~(string_list[firstindex])& string_list[secondindex]))
+                    if(invertfirst==0) and (invertsecond==1):
+                        print(bin(string_list[firstindex] & ~(string_list[secondindex])))
+
+                else:
+                    cnt=1
+                    firstindex=j
+or_op()
+and_op()
+not_and_op()
+
+Pr5b: Vector Space Model
+import nltk
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+documents = [
+    "The quick brown fox jumps over the lazy dog.",
+    "A brown dog chased the fox.",
+    "The dog is lazy."
+]
+query = "brown dog"
+
+from nltk.tokenize import word_tokenize
+tokenized_documents = [word_tokenize(doc.lower()) for doc in documents]
+tokenized_query = word_tokenize(query.lower())
+
+preprocessed_documents = [' '.join(doc) for doc in tokenized_documents]
+preprocessed_query = ' '.join(tokenized_query)
+
+tfidf_vectorizer = TfidfVectorizer()
+tfidf_matrix = tfidf_vectorizer.fit_transform(preprocessed_documents)
+
+print(tfidf_vectorizer.vocabulary_)
+print(tfidf_matrix)
+query_vector = tfidf_vectorizer.transform([preprocessed_query])
+cosine_similarities = cosine_similarity(query_vector, tfidf_matrix)
+results = [(documents[i], cosine_similarities[0][i]) for i in range(len(documents))]
+results.sort(key=lambda x: x[1], reverse=True)
+for doc, similarity in results:
+    print(f"Similarity: {similarity:.2f}\n{doc}\n")
+
+Pr6: Clustering Algorithms
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.feature_extraction.text import TfidfVectorizer
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import silhouette_score
+
+dataset = [
+    "I love playing football on the weekends",
+    "I enjoy hiking and camping in the mountain",
+    "I like to read books and watch movies",
+    "I prefer playing video games over sports",
+    "I love listening to music and going to concerts"
+]
+
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(dataset)
+
+k = 2
+km = KMeans(n_clusters=k, n_init=10)  
+km.fit(X)
+y_pred = km.predict(X)
+print('Cluster assignments:', y_pred)
+print('Silhouette score of the model:', silhouette_score(X, y_pred))
+
+X = X.toarray()
+
+sns.scatterplot(x=X[:,0], y=X[:,5], hue=y_pred, palette='rainbow')
+plt.show()
+
+Pr7: Text Categorization
+import numpy as nm
+import matplotlib.pyplot as mtp
+from sklearn.datasets import load_iris
+
+iris = load_iris()
+
+X = iris.data
+Y = iris.target
+print(X)
+print(Y)
+from sklearn.model_selection import train_test_split
+X_train,X_test,Y_train,Y_test = train_test_split(X, Y, test_size=0.4,random_state=1)
+from sklearn.naive_bayes import GaussianNB
+gnb = GaussianNB()
+gnb.fit(X_train, Y_train)
+
+Y_pred = gnb.predict(X_test)
+print(Y_pred)
+
+from sklearn import metrics
+print("Gaussian Naives Bayes model accuracy(in %):",metrics.accuracy_score(Y_test,Y_pred)*100)
+
+Pr8a: Text summarization algorithm
+import nltk
+import heapq
+text = '''Introduction
+
+Trees, those silent giants that populate our landscapes, have always been an integral part of our natural world.
+They provide us with oxygen, shade on a hot summer day, and a refuge for countless creatures.
+Yet, beyond their physical presence, trees have a secret life that is truly fascinating.
+One of the most intriguing aspects of their existence is their ability to communicate with each other and form intricate networks beneath the soil.
+In this article, we'll delve into this extraordinary fact about trees – their ability to communicate and share vital information with their neighbors.
+
+The Wood Wide Web
+
+Imagine a vast underground network, similar to the World Wide Web, but made of roots and fungi.
+This is what scientists have aptly named the "Wood Wide Web." This underground system enables trees to exchange a wealth of information,
+such as warnings about pests and diseases, sharing nutrients, and even sending distress signals during times of danger.
+
+The Mycorrhizal Connection
+
+At the heart of the Wood Wide Web are mycorrhizal fungi, which have a symbiotic relationship with trees.
+These fungi attach themselves to the tree's roots and extend their thread-like structures, known as hyphae, far and wide through the soil.
+This intricate network of hyphae connects multiple trees, forming a mycorrhizal network.
+
+Sharing Nutrients
+
+One of the most remarkable aspects of this tree communication system is the sharing of nutrients.
+Trees, through their roots, provide sugars and carbohydrates to the fungi. In return, the fungi scavenge the soil for essential nutrients,
+such as phosphorus and nitrogen, which are often scarce. The fungi then transport these nutrients back to the trees, ensuring their mutual
+survival.
+
+Warning Signals
+
+When a tree is under attack by insects or disease, it can release chemical signals into the air and soil.
+These signals are picked up by neighboring trees through their roots and can trigger a defensive response.
+For example, when a tree is infested with aphids, it can release chemicals that repel aphids or attract predators of aphids.
+This warning system can help neighboring trees prepare for an impending threat.
+Sharing Resources In a dense forest, where trees compete for sunlight, the Wood Wide Web allows for a form of cooperation. Larger,
+older trees with more access to sunlight can share some of their energy with smaller, shaded trees.
+This cooperative behavior ensures the survival of the entire forest ecosystem.
+
+Conclusion
+
+The fact that trees communicate with each other through the Wood Wide Web is not only fascinating but also a testament to the interconnectedness
+of life on Earth. It highlights the complexity of ecosystems and the importance of preserving our forests. Understanding this hidden world of tree
+communication can lead to more sustainable forestry practices and a deeper appreciation for the remarkable lives of these silent giants. The next
+time you walk through a forest, take a moment to marvel at the incredible network of communication happening beneath your feet, where trees share
+their secrets and support one another in the silent language of nature.'''
+
+stopwords = nltk.corpus.stopwords.words('english')
+sentence_list = nltk.sent_tokenize(text)
+frequency_map={}
+word_list= nltk.word_tokenize(text)
+
+for i in word_list:
+    if i not in stopwords:
+        if i not in frequency_map:
+            frequency_map[i]=1
+        else:
+            frequency_map[i] +=1
+           
+max_frequency = max(frequency_map.values())
+
+for word in frequency_map:
+    frequency_map[word]= frequency_map[word]/max_frequency
+    sent_score={}
+for sent in sentence_list:
+    for word in word_list:
+        if word in frequency_map and len(sent.split(' ')) < 35:
+            if sent not in sent_score:
+                sent_score[sent]=frequency_map[word]
+            else:
+                sent_score[sent] += frequency_map[word]
+               
+summary = heapq.nlargest(10, sent_score, key= sent_score.get)
+
+for a in summary:
+    print(a)
+
+Pr8b: Question Answering
+from txtai.embeddings import Embeddings
+from txtai.pipeline import Extractor
+
+embeddings=Embeddings({"path":"sentence-transformers/paraphrase-MiniLM-L6-v2"})
+extractor = Extractor(embeddings, "distilbert-base-cased-distilled-squad")
+Data= [
+    "Australis is the only country that is also a continent.",
+    "The Great Barrier Reef is the world's larget living structure and can be seen from space.",
+    "Australia is home to a variety of unique wildlife, including kangaroos, koalas and platypuses.",
+    "The world's oldest known civilization , the Aboriginal culture, is believed to have originated in Australia around 50,000 years ago."
+    "Australia is famous for its large number of deadly animals, such as snakes, spiders, and marine creatures.",
+    "The Australian Alps, or Snowy Mountains, receive more snowfall than Switzerland."
+    "Australia has over 10,000 beaches, more than any other country.",
+    "The Outback, a vast, remote area of Australia, covers most of the country's landmass.",
+    "Australia has a large area of vineyards and is known for producing high-quality wines.",
+    "Opera House, an iconic building and unesco World Heritage Site, is in Sydney."
+    ]
+question="Where is Opera House in Australia?"
+print(extractor([(question, question, question, False)], Data))
+
+
+Pr9: SVM
+from sklearn.datasets import load_svmlight_file
+from sklearn.svm import SVC
+from sklearn.metrics import ndcg_score
+X_train, y_train = load_svmlight_file("training_data.txt")
+rank_svm = SVC(kernel='linear')
+rank_svm.fit(X_train, y_train)
+X_test, y_test = load_svmlight_file("test_data.txt")
+rankings = rank_svm.predict(X_test)
+ndcg = ndcg_score(y_test.reshape(1, -1), rankings.reshape(1, -1))
+print("NDCG Score:", ndcg)
+
+Pr10: Webcrawler
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+import time
+
+def fetch_links(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        return [urljoin(url, link['href']) for link in soup.find_all('a', href=True)]
+    return []
+
+def crawl(start_url, max_pages=10):
+    visited, queue = set(), [start_url]
+    while queue and len(visited) < max_pages:
+        url = queue.pop(0)
+        if url not in visited:
+            links = fetch_links(url)
+            visited.add(url)
+            queue.extend(link for link in links if link not in visited and link not in queue)
+            time.sleep(1)
+    return visited
+start_url = 'http://www.google.com'
+max_pages = 10
+visited_pages = crawl(start_url, max_pages)
+print("Visited pages:")
+for page in visited_pages:
+    print(page)
+
+#pip install requests beautifulsoup4
+
